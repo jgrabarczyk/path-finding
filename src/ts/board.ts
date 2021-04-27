@@ -74,7 +74,12 @@ export class Board {
 
   private newLine = (y: number) => Array.from(Array(this.columns), (v: any, index) => new Chunk(index, y));
 
-  findPath() {
+  private async delay(t:number = 250) {
+      return new Promise(function(resolve) { 
+        setTimeout(resolve.bind(null), t)
+    });
+ }
+  async findPath() {
     this.openChunks.push(this.startChunk_);
 
     while (this.openChunks.length) {
@@ -84,7 +89,9 @@ export class Board {
       if (!this.isStartPoint(active.x, active.y) && !this.isGoalPoint(active.x, active.y)) {
         active.state = ChunkState.CLOSED;
       }
-      
+      await this.delay();
+      this.reDraw()
+
       this.closedChunks.push(active);
 
       if (this.isGoalChunk(active)) {
@@ -96,6 +103,9 @@ export class Board {
       neighbors.forEach(neighbor => {
         if (neighbor.state === ChunkState.OBSTACLE || this.closedChunks.includes(neighbor)) {
           return;
+        }
+        if (!this.isStartPoint(neighbor.x, neighbor.y) && !this.isGoalPoint(neighbor.x, neighbor.y) && neighbor.state !== ChunkState.CLOSED) {
+          neighbor.state = ChunkState.OPEN;
         }
 
         //if new path to neighbor is shorter OR neighbor is not in OPEN
@@ -112,7 +122,6 @@ export class Board {
 
         }
       });
-      this.reDraw()
     }
   }
 
@@ -197,11 +206,13 @@ export class Board {
     return Math.round(Math.random() * (max - 0) + 0);
   }
 
-  printPath() {
+  async printPath() {
     let current: Chunk = this.goalChunk_;
     while (current !== this.startChunk_) {
       current.state = ChunkState.PATH
       current = current.parent
+      await this.delay();
+      this.reDraw()
     }
     this.reDraw()
   }
