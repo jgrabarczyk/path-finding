@@ -8,12 +8,13 @@ export class Board {
   private closedChunks_: Chunk[] = [];
   private startChunk_!: Chunk;
   private goalChunk_!: Chunk;
+  private currentChunk_!: Chunk;
 
   constructor(size: [number, number]) {
     this.grid_ = new Grid(size);
   }
 
-  public pickRandom(max: number) {
+  public pickRandom(max: number): number {
     return Math.round(Math.random() * (max - 0) + 0);
   }
 
@@ -45,51 +46,39 @@ export class Board {
     )
   }
 
-  public async findPath() {
+  public async findPath(): Promise<void> {
     this.openChunks_.push(this.startChunk_);
 
     while (this.openChunks_.length) {
-      let active: Chunk = this.findLowestCostInOpen();
-      this.removeFromOpen(active);
+      await this.reDraw();
 
-      if (!this.isStartChunk(active) && !this.isGoalChunk(active)) {
-        active.state = ChunkState.CLOSED;
-      }
+      this.currentChunk_ = this.findLowestCostInOpen();
+      this.removeCurrentFromOpen();
+      this.addCurrentToClosedChunks();
 
-      await this.reDraw()
-
-      this.closedChunks_.push(active);
-
-      if (this.isGoalChunk(active)) {
-        const path: Chunk[] = this.retraceFinalPath();
-        this.printPath(path);
+      if (this.isGoalChunk(this.currentChunk_)) {
+        this.finish();
         return
       }
 
-      let neighbors: Chunk[] = this.findNeighboursOf(active);
-      neighbors.forEach(neighbor => {
-        if (neighbor.state === ChunkState.OBSTACLE || this.closedChunks_.includes(neighbor)) {
-          return
-        }
+      this.findNeighboursOfCurrent().forEach(neighbor => {
+        if (this.isObstacleOrIsClosed(neighbor)) { return }
 
-        if (!this.isStartChunk(neighbor) && !this.isGoalChunk(neighbor) && neighbor.state !== ChunkState.CLOSED) {
-          neighbor.state = ChunkState.OPEN;
-        }
+        neighbor.state = ChunkState.OPEN;
 
-        const distanceToNb = active.getDistanceTo(neighbor)
-        let newHomeCost = active.homeCost + distanceToNb;
-        if (neighbor.homeCost > newHomeCost || !this.openChunks_.includes(neighbor)) {
-          //set final cost
-          neighbor.homeCost = newHomeCost
-          neighbor.goalCost = neighbor.getDistanceTo(this.goalChunk_)
-          neighbor.parent = active;
-          if (!this.openChunks_.includes(neighbor)) {
-            this.openChunks_.push(neighbor)
-          }
+        if (this.newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor)) { return; }
 
-        }
+        this.setNewCostAndParent(neighbor);
+
+        if (this.openChunks_.includes(neighbor)) { return; }
+
+        this.openChunks_.push(neighbor)
       });
     }
+  }
+
+  private newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor: Chunk): boolean{
+    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.openChunks_.includes(neighbor)
   }
 
   private findLowestCostInOpen(): Chunk {
@@ -100,22 +89,22 @@ export class Board {
     return (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost) ? -1 : 1;
   }
 
-  private removeFromOpen(chunk: Chunk) {
-    const index = this.openChunks_.indexOf(chunk)
+  private removeCurrentFromOpen(): void {
+    const index = this.openChunks_.indexOf(this.currentChunk_)
     if (index !== -1) {
       this.openChunks_.splice(index, 1);
     }
   }
 
   private isStartChunk(chunk: Chunk): boolean {
-    return chunk.y === this.startChunk_?.y && this.startChunk_?.x === chunk.x;
+    return chunk.y === this.startChunk_.y && this.startChunk_.x === chunk.x;
   }
 
   private isGoalChunk(chunk: Chunk): boolean {
     return chunk.x === this.goalChunk_.x && this.goalChunk_.y == chunk.y
   }
 
-  private async reDraw(delay: number = 150) {
+  private async reDraw(delay: number = 150): Promise<void> {
     await this.delay(delay)
     for (let y = 0; y < this.grid_.rows; y++) {
       for (let x = 0; x < this.grid_.columns; x++) {
@@ -124,30 +113,37 @@ export class Board {
     }
   }
 
-  private async delay(t: number) {
+  private async delay(t: number): Promise<void> {
     return new Promise(function (resolve) {
       setTimeout(resolve.bind(null), t)
     });
   }
 
-  private findNeighboursOf(chunk: Chunk): Chunk[] {
+  private findNeighboursOfCurrent(): Chunk[] {
     const neighbors: Chunk[] = [];
     for (let x = - 1; x <= 1; x++) {
       for (let y = - 1; y <= 1; y++) {
 
         const point: Point = {
-          x: chunk.x + x,
-          y: chunk.y + y
+          x: this.currentChunk_.x + x,
+          y: this.currentChunk_.y + y
         }
 
-        if (point.x == chunk.x && point.y == chunk.y) { continue; }
+        if (!this.isInGrid(point) || this.isCurrentChunkPosition(point)) { continue; }
 
-        if (point.x >= 0 && point.x < this.grid_.columns && point.y >= 0 && point.y < this.grid_.rows) {
-          neighbors.push(this.grid_.getChunk(point));
-        }
+        neighbors.push(this.grid_.getChunk(point));
       }
     }
     return neighbors;
+  }
+
+  private isInGrid(point: Point): boolean {
+    return (point.x >= 0 && point.x < this.grid_.columns
+      && point.y >= 0 && point.y < this.grid_.rows)
+  }
+
+  private isCurrentChunkPosition(point: Point) {
+    return point.x == this.currentChunk_.x && point.y == this.currentChunk_.y
   }
 
   private retraceFinalPath() {
@@ -160,11 +156,40 @@ export class Board {
 
     return finalPath.reverse();
   }
-  
+
   private async printPath(path: Chunk[]) {
+    path.pop()
     for (const chunk of path) {
       chunk.state = ChunkState.PATH
       await this.reDraw()
     }
   }
+  
+  private addCurrentToClosedChunks() {
+    if (!this.isStartChunk(this.currentChunk_) && !this.isGoalChunk(this.currentChunk_)) {
+      this.currentChunk_.state = ChunkState.CLOSED;
+    }
+    this.closedChunks_.push(this.currentChunk_);
+  }
+
+  private finish() {
+    this.currentChunk_.state = ChunkState.GOAL
+    const path: Chunk[] = this.retraceFinalPath();
+    this.printPath(path);
+  }
+
+  private isObstacleOrIsClosed(chunk: Chunk) {
+    return chunk.state === ChunkState.OBSTACLE || this.closedChunks_.includes(chunk)
+  }
+
+  private getNewHomeCost(neighbor: Chunk) {
+    return this.currentChunk_.homeCost + this.currentChunk_.getDistanceTo(neighbor);
+  }
+
+  private setNewCostAndParent(neighbor: Chunk) {
+    neighbor.homeCost = this.getNewHomeCost(neighbor)
+    neighbor.goalCost = neighbor.getDistanceTo(this.goalChunk_)
+    neighbor.parent = this.currentChunk_;
+  }
+
 }
