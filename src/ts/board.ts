@@ -74,11 +74,11 @@ export class Board {
 
   private newLine = (y: number) => Array.from(Array(this.columns), (v: any, index) => new Chunk(index, y));
 
-  private async delay(t:number = 250) {
-      return new Promise(function(resolve) { 
-        setTimeout(resolve.bind(null), t)
+  private async delay(t: number = 100) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve.bind(null), t)
     });
- }
+  }
   async findPath() {
     this.openChunks.push(this.startChunk_);
 
@@ -95,26 +95,25 @@ export class Board {
       this.closedChunks.push(active);
 
       if (this.isGoalChunk(active)) {
-        this.printPath();
+        const path: Chunk[] = this.getFinalPath();
+        this.printPath(path);
         return
       }
 
       let neighbors: Chunk[] = this.findNeighboursOf(active);
       neighbors.forEach(neighbor => {
-        if (neighbor.state === ChunkState.OBSTACLE || this.closedChunks.includes(neighbor)) {
-          return;
-        }
+
         if (!this.isStartPoint(neighbor.x, neighbor.y) && !this.isGoalPoint(neighbor.x, neighbor.y) && neighbor.state !== ChunkState.CLOSED) {
           neighbor.state = ChunkState.OPEN;
         }
 
         //if new path to neighbor is shorter OR neighbor is not in OPEN
-        let newGoalCost = neighbor.getDistanceTo(this.goalChunk_);
-        if (neighbor.goalCost > newGoalCost || !this.openChunks.includes(neighbor)) {
+        const distanceToNb = active.getDistanceTo(neighbor)
+        let newHomeCost = active.homeCost + distanceToNb;
+        if (neighbor.homeCost > newHomeCost || !this.openChunks.includes(neighbor)) {
           //set final cost
-          neighbor.goalCost = newGoalCost
-          neighbor.homeCost = neighbor.getDistanceTo(this.startChunk_)
-
+          neighbor.homeCost = newHomeCost
+          neighbor.goalCost = neighbor.getDistanceTo(this.goalChunk_)
           neighbor.parent = active;
           if (!this.openChunks.includes(neighbor)) {
             this.openChunks.push(neighbor)
@@ -130,8 +129,8 @@ export class Board {
     if (index !== -1) {
       this.openChunks.splice(index, 1);
     }
-
   }
+
   removeFromClosed(chunk: Chunk) {
     const index = this.closedChunks.indexOf(chunk)
     if (index !== -1) {
@@ -152,52 +151,26 @@ export class Board {
   }
 
   findNeighboursOf(chunk: Chunk): Chunk[] {
-    const point: Point = {
-      x: chunk.x,
-      y: chunk.y
-    }
     const neighbors: Chunk[] = [];
-    const leftX = point.x - 1;
-    const rightX = point.x + 1;
-    const upY = point.y - 1;
-    const downY = point.y + 1;
-    if (upY >= 0) {
-      // up
-      neighbors.push(this.getChunk({ x: point.x, y: upY }));
-    }
+    for (let x = - 1; x <= 1; x++) {
+      for (let y = - 1; y <= 1; y++) {
+        const point: Point = {
+          x: chunk.x + x,
+          y: chunk.y + y
+        }
+        if (point.x === 0 && point.y == 0
+          || point.x == chunk.x && point.y == chunk.y
+        ) {
+          continue;
+        }
 
-    if (leftX >= 0) {
-      // left
-      neighbors.push(this.getChunk({ x: leftX, y: point.y }));
-
-      if (upY >= 0) {
-        // left up
-        neighbors.push(this.getChunk({ x: leftX, y: upY }));
+        if (point.x >= 0 && point.x < this.columns && point.y >= 0 && point.y < this.rows) {
+          const newChunk = this.getChunk(point)
+          if (newChunk.state !== ChunkState.OBSTACLE && !this.closedChunks.includes(newChunk)) {
+            neighbors.push(newChunk);
+          }
+        }
       }
-
-      if (downY < this.rows) {
-        //left down
-        neighbors.push(this.getChunk({ x: leftX, y: downY }));
-      }
-
-    }
-
-    if (rightX < this.columns) {
-      // right
-      neighbors.push(this.getChunk({ x: rightX, y: point.y }));
-      if (upY >= 0) {
-        // right up
-        neighbors.push(this.getChunk({ x: rightX, y: upY }));
-      }
-      if (downY < this.rows) {
-        //right down
-        neighbors.push(this.getChunk({ x: rightX, y: downY }));
-      }
-    }
-
-    if (downY < this.rows) {
-      //right down
-      neighbors.push(this.getChunk({ x: point.x, y: downY }));
     }
     return neighbors;
   }
@@ -206,14 +179,22 @@ export class Board {
     return Math.round(Math.random() * (max - 0) + 0);
   }
 
-  async printPath() {
+  getFinalPath() {
+    let finalPath: Chunk[] = []
     let current: Chunk = this.goalChunk_;
     while (current !== this.startChunk_) {
-      current.state = ChunkState.PATH
+      finalPath.push(current)
       current = current.parent
-      await this.delay();
+    }
+
+    return finalPath.reverse();
+  }
+
+  async printPath(path: Chunk[]) {
+    for (const chunk of path) {
+      await this.delay(200);
+      chunk.state = ChunkState.PATH
       this.reDraw()
     }
-    this.reDraw()
   }
 }

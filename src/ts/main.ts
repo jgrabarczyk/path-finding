@@ -10,7 +10,10 @@ board.setStart({
     x: board.pickRandom(24),
     y: board.pickRandom(24)
   });
-board.setGoal({x:24,y:15});
+board.setGoal({
+    x: board.pickRandom(24),
+    y: board.pickRandom(24)
+  });
 board.initialDraw();
 
 board.findPath()
