@@ -1,5 +1,4 @@
 import { Canvas } from "./canvas";
-
 export class Chunk extends Canvas {
   public goalCost: number= 0
   public homeCost: number = 0;
