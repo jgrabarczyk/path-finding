@@ -1,6 +1,7 @@
 import { Chunk, ChunkState } from "./chunk";
 import { Grid } from "./grid";
 import { Point } from "./point";
+import { OBSTACLE_CHANCE } from "./settings";
 
 
 interface BoardI {
@@ -55,7 +56,7 @@ export class Board {
 
   private canBeObstacle(x: number, y: number): boolean {
     const chunk = this.grid_.getChunk({ x, y })
-    return (Math.random() > 0.45
+    return (Math.random() > (1 - OBSTACLE_CHANCE)
       && !this.isGoalChunk(chunk)
       && !this.isStartChunk(chunk)
     )
