@@ -5,13 +5,20 @@ export class Grid {
   public body_: Chunk[][];
   private columns_: number;
   private rows_: number;
-  constructor(size: [number, number]) {
-    this.columns_ = size[0]
-    this.rows_ = size[0]
-    this.body_ = this.emptyBoard()
+
+  constructor([columns, rows]: [number, number]) {
+    this.columns_ = columns;
+    this.rows_ = rows;
+    this.body_ = this.emptyBoard();
   }
-  private emptyBoard = () => Array.from(Array(this.rows_), (v: any, index) => this.newLine(index))
-  private newLine = (y: number) => Array.from(Array(this.columns_), (v: any, index) => new Chunk(index, y));
+
+  private emptyBoard(): Chunk[][] {
+    return Array.from(Array(this.rows_), (_, index) => this.newLine(index))
+  }
+
+  private newLine(y: number): Chunk[] {
+    return Array.from(Array(this.columns_), (_, index) => new Chunk(index, y));
+  }
 
   get body(): Chunk[][] {
     return this.body

@@ -1,6 +1,8 @@
+import { BLOCK_SIZE, CANVAS_ELEMENT } from "./settings";
+
 export class Canvas {
-  private canvas_:HTMLCanvasElement = document.getElementById("board") as HTMLCanvasElement;
-  private blockSize_: number = 25;
+  private canvas_:HTMLCanvasElement = CANVAS_ELEMENT as HTMLCanvasElement;
+  private blockSize_: number = BLOCK_SIZE;
 
   protected ctx:CanvasRenderingContext2D =  this.canvas_.getContext("2d") as CanvasRenderingContext2D;
 
