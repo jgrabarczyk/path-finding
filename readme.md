@@ -19,14 +19,7 @@ npm run wbw
 ```
 
 ## Settings
-You can play with board settings in main.ts 
-```
-new Board({
-  size: [number,number], // board size [x, y]
-  delay?: number, // delay in ms between every "tick" default:0
-}
-```
-
+You can play with board settings settings.ts
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
