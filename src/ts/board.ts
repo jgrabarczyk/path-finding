@@ -1,5 +1,6 @@
 import { Chunk, ChunkState } from "./chunk";
 import { Grid } from "./grid";
+import { Heap } from "./heap";
 import { Point } from "./point";
 import { OBSTACLE_CHANCE } from "./settings";
 
@@ -10,13 +11,17 @@ interface BoardI {
 }
 export class Board {
   private grid_: Grid;
-  private openChunks_: Chunk[] = [];
-  private closedChunks_: Chunk[] = [];
   private startChunk_!: Chunk;
   private goalChunk_!: Chunk;
   private currentChunk_!: Chunk;
   private delay_: number;
   private chunksToRedraw_: Chunk[] = [];
+
+  private sortByCost = (a: Chunk, b: Chunk) =>
+    (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost);
+
+  private heap_ = new Heap<Chunk>(this.sortByCost);
+  private closedChunks_: Chunk[] = [];
 
   constructor(board: BoardI | [number, number]) {
     if (Array.isArray(board)) {
@@ -63,13 +68,14 @@ export class Board {
   }
 
   public async findPath(): Promise<void> {
-    this.openChunks_.push(this.startChunk_);
+    this.heap_.add(this.startChunk_);
 
-    while (this.openChunks_.length) {
+    while (this.heap_.length()) {
       await this.reDraw();
 
-      this.currentChunk_ = this.findLowestCostInOpen();
-      this.removeCurrentFromOpen();
+      this.currentChunk_ = this.heap_.getFirst();
+      this.heap_.removeRoot();
+
       this.addCurrentToClosedChunks();
 
       if (this.isGoalChunk(this.currentChunk_)) {
@@ -87,31 +93,18 @@ export class Board {
 
         this.setNewCostAndParent(neighbor);
 
-        if (this.openChunks_.includes(neighbor)) { return; }
+        if (this.heap_.contains(neighbor)) { return; }
 
-        this.openChunks_.push(neighbor)
+        this.heap_.add(neighbor);
       });
     }
   }
 
   private newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor: Chunk): boolean {
-    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.openChunks_.includes(neighbor)
+    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.heap_.contains(neighbor)
   }
 
-  private findLowestCostInOpen(): Chunk {
-    return this.openChunks_.sort(this.sortByCost)[0];
-  }
 
-  private sortByCost = (a: Chunk, b: Chunk) => {
-    return (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost) ? -1 : 1;
-  }
-
-  private removeCurrentFromOpen(): void {
-    const index = this.openChunks_.indexOf(this.currentChunk_)
-    if (index !== -1) {
-      this.openChunks_.splice(index, 1);
-    }
-  }
 
   private isStartChunk(chunk: Chunk): boolean {
     return chunk.y === this.startChunk_.y && this.startChunk_.x === chunk.x;

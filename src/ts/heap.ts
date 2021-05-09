@@ -1,5 +1,3 @@
-import { Chunk } from "./chunk";
-
 export type Sort<T> = (a: T, b: T) => boolean;
 
 export class Heap<T> {
@@ -39,7 +37,7 @@ export class Heap<T> {
     return this.items_[index]
   }
 
-  length(){
+  length(): number {
     return this.items_.length;
   }
 
@@ -48,11 +46,11 @@ export class Heap<T> {
     this.sortUp()
   }
 
-  getFirst(): T{
+  getFirst(): T {
     return this.items_[0];
   }
-  
-  contains(item:T): boolean{
+
+  contains(item: T): boolean {
     return this.items_.includes(item);
   }
 
@@ -92,15 +90,14 @@ export class Heap<T> {
 
     //sort 
     while (true) {
-      const tst = newRoot as unknown as Chunk;
-      console.log('current final cost' ,tst.x , tst.y, '|',tst.finalCost);
       const leftChild = this.getLeftChild(this.getIndex(newRoot));
       const rightChild = this.getRightChild(this.getIndex(newRoot));
-      if (!leftChild && !rightChild) { return;}
-      console.log(leftChild, rightChild)
+      let smaller: T;
+      if (!leftChild && !rightChild) { return; }
+      else if (leftChild && !rightChild) { smaller = leftChild }
+      else if (!leftChild && rightChild) { smaller = rightChild }
+      else { smaller = this.compare(leftChild, rightChild) ? leftChild : rightChild; }
 
-      const smaller = this.compare(leftChild,rightChild) ? leftChild : rightChild;
-      console.log(smaller, newRoot)
       if (this.compare(smaller, newRoot)) {
         this.swap(smaller, newRoot)
       } else {
