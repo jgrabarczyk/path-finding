@@ -1,3 +1,4 @@
+import { Canvas } from "./canvas";
 import { Chunk, ChunkState } from "./chunk";
 import { Grid } from "./grid";
 import { Heap } from "./heap";
@@ -8,8 +9,9 @@ import { OBSTACLE_CHANCE } from "./settings";
 interface BoardI {
   size: [number, number],
   delay?: number,
+  canvas: HTMLCanvasElement;
 }
-export class Board {
+export class Board extends Canvas {
   private grid_: Grid;
   private startChunk_!: Chunk;
   private goalChunk_!: Chunk;
@@ -23,14 +25,35 @@ export class Board {
   private heap_ = new Heap<Chunk>(this.sortByCost);
   private closedChunks_: Chunk[] = [];
 
-  constructor(board: BoardI | [number, number]) {
-    if (Array.isArray(board)) {
-      this.grid_ = new Grid(board);
-      this.delay_ = 0
-    } else {
-      this.grid_ = new Grid(board.size);
-      this.delay_ = board.delay || 0
-    }
+  constructor(board: BoardI) {
+    super(board.canvas);
+
+    this.grid_ = new Grid(board.size, this.ctx);
+    this.delay_ = board.delay || 0
+  }
+
+  exportGrid() {
+    let gridToExport: ChunkState[][] = new Array();
+    this.grid_.body_.forEach((row, y) => {
+      gridToExport.push([])
+      row.forEach((chunk, x) => {
+        gridToExport[y][x] = chunk.state
+      })
+    })
+    return gridToExport;
+  }
+
+  importGrid(gridBody: ChunkState[][]) {
+    let newBody: Chunk[][] = new Array();
+
+    gridBody.forEach((row, y) => {
+      newBody.push([]);
+      row.forEach((chunkState, x) => {
+        newBody[y][x] = new Chunk(x, y, this.ctx, chunkState)
+        newBody[y][x].draw();
+      })
+    })
+    this.grid_.body_ = newBody;
   }
 
   public pickRandom(max: number): number {
@@ -49,14 +72,20 @@ export class Board {
     this.addChunkToRedraw(this.goalChunk_)
   }
 
-  public initialDraw(): void {
-    for (let y = 0; y < this.grid_.rows; y++) {
-      for (let x = 0; x < this.grid_.columns; x++) {
-        const currentChunk = this.grid_.getChunk({ x, y });
-        currentChunk.state = this.canBeObstacle(x, y) ? ChunkState.OBSTACLE : currentChunk.state;
-        currentChunk.draw();
+  public initialDraw(gridBody?: ChunkState[][]): void {
+    if (gridBody) {
+      this.importGrid(gridBody);
+    } else {
+
+      for (let y = 0; y < this.grid_.rows; y++) {
+        for (let x = 0; x < this.grid_.columns; x++) {
+          const currentChunk = this.grid_.getChunk({ x, y });
+          currentChunk.state = this.canBeObstacle(x, y) ? ChunkState.OBSTACLE : currentChunk.state;
+          currentChunk.draw();
+        }
       }
     }
+
   }
 
   private canBeObstacle(x: number, y: number): boolean {

@@ -5,10 +5,12 @@ export class Grid {
   public body_: Chunk[][];
   private columns_: number;
   private rows_: number;
+  private ctx:CanvasRenderingContext2D;
 
-  constructor([columns, rows]: [number, number]) {
+  constructor([columns, rows]: [number, number],ctx: CanvasRenderingContext2D) {
     this.columns_ = columns;
     this.rows_ = rows;
+    this.ctx = ctx;
     this.body_ = this.emptyBoard();
   }
 
@@ -17,7 +19,7 @@ export class Grid {
   }
 
   private newLine(y: number): Chunk[] {
-    return Array.from(Array(this.columns_), (_, index) => new Chunk(index, y));
+    return Array.from(Array(this.columns_), (_, index) => new Chunk(index, y, this.ctx));
   }
 
   get body(): Chunk[][] {

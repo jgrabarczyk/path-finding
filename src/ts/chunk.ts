@@ -1,5 +1,4 @@
-import { Canvas } from "./canvas";
-import { BASIC_COST, DIAGONAL_COST } from "./settings";
+import { BASIC_COST, BLOCK_SIZE, DIAGONAL_COST } from "./settings";
 
 export enum ChunkState {
   START = '#FFFF00', // yellow
@@ -10,12 +9,15 @@ export enum ChunkState {
   CLOSED = '#FF0000', // red
   PATH = '#00FFFF', // cyan
 }
-export class Chunk extends Canvas {
+export class Chunk {
   public goalCost: number = 0;
   public homeCost: number = 0;
   public parent!: Chunk;
   public state = ChunkState.EMPTY;
 
+  //
+  blockSize: number;
+  //.
   get finalCost(): number {
     return this.goalCost + this.homeCost;
   }
@@ -23,8 +25,12 @@ export class Chunk extends Canvas {
   constructor(
     public x: number,
     public y: number,
+    private ctx:CanvasRenderingContext2D,
+    state?: ChunkState,
   ) {
-    super()
+    // super();
+    this.blockSize = BLOCK_SIZE
+    this.state = state || ChunkState.EMPTY;
   }
 
   draw(): void {
