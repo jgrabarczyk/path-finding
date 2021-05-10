@@ -1,3 +1,4 @@
+import { Point } from "./point";
 
 export class Canvas {
   private canvas_:HTMLCanvasElement;
@@ -18,6 +19,13 @@ export class Canvas {
 
   pickRandom(max: number): number {
     return Math.round(Math.random() * max);
+  }
+
+  pickPoint(BOARD_SIZE: [number,number]): Point{
+   return {
+      x: this.pickRandom(BOARD_SIZE[0]),
+      y: this.pickRandom(BOARD_SIZE[1])
+    }
   }
 
   private setWidth(width:number){

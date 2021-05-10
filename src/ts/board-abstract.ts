@@ -25,7 +25,7 @@ export abstract class BoardAbstract extends Canvas {
   constructor(canvas: HTMLCanvasElement, board: BoardI,) {
     super(canvas, board.blockSize);
 
-    this.grid_ = new Grid(board.size, this.ctx);
+    this.grid_ = new Grid(board.size, this.ctx, this.blockSize_);
     this.delay_ = board.delay || 0
     this.obstacleChance_ = board.obstacleChance || 0.25
   }
@@ -116,7 +116,7 @@ export abstract class BoardAbstract extends Canvas {
   }
 
   protected async reDraw(): Promise<void> {
-    // if (!this.delay_) { return; }
+    if (!this.delay_) { return; }
     await this.delay(this.delay_);
     this.chunksToRedraw_.forEach(chunk => chunk.draw())
     this.chunksToRedraw_ = [];
@@ -178,8 +178,6 @@ export abstract class BoardAbstract extends Canvas {
       
       finalPath.push(current)
       if(!current.parent){
-
-        console.log('c:' ,current, 's: ',this.startChunk_,'p:' ,current.parent)
         return finalPath.reverse();
       }
       current = current.parent
