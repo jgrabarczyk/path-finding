@@ -1,8 +1,12 @@
 import { BoardAbstract, BoardI } from "./board-abstract";
 import { Chunk, ChunkState } from "./chunk";
+import { Heap, Sort } from "./heap";
 
-export class Board extends BoardAbstract {
-  private openChunks_: Chunk[] = [];
+export class BoardHeap extends BoardAbstract {
+  protected sortByCost = (a: Chunk, b: Chunk) =>
+    (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost);
+
+  private heap_ = new Heap<Chunk>(this.sortByCost as Sort<Chunk>);
 
   constructor(canvas: HTMLCanvasElement, board: BoardI) {
     super(canvas, board);
@@ -10,18 +14,19 @@ export class Board extends BoardAbstract {
 
   public async findPath(): Promise<void> {
     let start = new Date().getTime();
-    this.openChunks_.push(this.start);
+    this.heap_.add(this.start);
 
-    while (this.openChunks_.length) {
+    while (this.heap_.size()) {
       await this.reDraw();
 
-      this.currentChunk_ = this.findLowestCostInOpen();
-      this.removeCurrentFromOpen();
+      this.currentChunk_ = this.heap_.getFirst();
+      this.heap_.removeRoot();
+
       this.addCurrentToClosedChunks();
 
       if (this.isGoalChunk(this.currentChunk_)) {
         let stop = new Date().getTime() - start;
-        console.log('stop:', stop)
+        console.log('stop heap:', stop)
         this.finish();
         return
       }
@@ -36,30 +41,15 @@ export class Board extends BoardAbstract {
 
         this.setNewCostAndParent(neighbor);
 
-        if (this.openChunks_.includes(neighbor)) { return; }
+        if (this.heap_.contains(neighbor)) { return; }
 
-        this.openChunks_.push(neighbor)
+        this.heap_.add(neighbor);
       });
     }
   }
 
   protected newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor: Chunk): boolean {
-    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.openChunks_.includes(neighbor)
-  }
-
-  private findLowestCostInOpen(): Chunk {
-    return this.openChunks_.sort(this.sortByCost)[0];
-  }
-
-  protected sortByCost = (a: Chunk, b: Chunk) => {
-    return (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost) ? -1 : 1;
-  }
-
-  private removeCurrentFromOpen(): void {
-    const index = this.openChunks_.indexOf(this.currentChunk_)
-    if (index !== -1) {
-      this.openChunks_.splice(index, 1);
-    }
+    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.heap_.contains(neighbor)
   }
 
 
