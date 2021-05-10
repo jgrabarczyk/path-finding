@@ -1,5 +1,3 @@
-import { Canvas } from "./canvas";
-import { BASIC_COST, DIAGONAL_COST } from "./settings";
 
 export enum ChunkState {
   START = '#FFFF00', // yellow
@@ -10,7 +8,9 @@ export enum ChunkState {
   CLOSED = '#FF0000', // red
   PATH = '#00FFFF', // cyan
 }
-export class Chunk extends Canvas {
+export class Chunk {
+  private readonly DIAGONAL_COST = 14;
+  private readonly BASIC_COST = 10;
   public goalCost: number = 0;
   public homeCost: number = 0;
   public parent!: Chunk;
@@ -23,8 +23,12 @@ export class Chunk extends Canvas {
   constructor(
     public x: number,
     public y: number,
+    private ctx: CanvasRenderingContext2D,
+    private blockSize:number,
+    state?: ChunkState,
   ) {
-    super()
+    // super();
+    this.state = state || ChunkState.EMPTY;
   }
 
   draw(): void {
@@ -34,7 +38,7 @@ export class Chunk extends Canvas {
     this.drawBorder(xPos, yPos, this.blockSize, this.blockSize);
     this.ctx.fillStyle = this.state;
     this.ctx.fillRect(xPos, yPos, this.blockSize, this.blockSize);
-    
+
     if (!this.finalCost) { return; }
 
     this.ctx.strokeStyle = "#000";
@@ -62,10 +66,10 @@ export class Chunk extends Canvas {
   public getDistanceTo(chunk: Chunk): number {
     const distX = Math.abs(this.x - chunk.x);
     const distY = Math.abs(this.y - chunk.y);
-    return distX > distY ? this.getMovementCost(distX,distY) : this.getMovementCost(distY,distX);
+    return distX > distY ? this.getMovementCost(distX, distY) : this.getMovementCost(distY, distX);
   }
 
-  private getMovementCost(higherNo: number ,lowerNo:number): number {
-    return DIAGONAL_COST * lowerNo + BASIC_COST * (higherNo - lowerNo)
+  private getMovementCost(higherNo: number, lowerNo: number): number {
+    return this.DIAGONAL_COST * lowerNo + this.BASIC_COST * (higherNo - lowerNo)
   }
 }
