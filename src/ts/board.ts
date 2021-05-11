@@ -1,5 +1,5 @@
-import { BoardAbstract, BoardI } from "./board-abstract";
-import { Chunk, ChunkState } from "./chunk";
+import { BoardAbstract, BoardI } from './board-abstract';
+import { Chunk, ChunkState } from './chunk';
 
 export class Board extends BoardAbstract {
   private openChunks_: Chunk[] = [];
@@ -9,7 +9,7 @@ export class Board extends BoardAbstract {
   }
 
   public async findPath(): Promise<void> {
-    let start = new Date().getTime();
+    const start = new Date().getTime();
     this.openChunks_.push(this.start);
 
     while (this.openChunks_.length) {
@@ -20,14 +20,14 @@ export class Board extends BoardAbstract {
       this.addCurrentToClosedChunks();
 
       if (this.isGoalChunk(this.currentChunk_)) {
-        let stop = new Date().getTime() - start;
-        console.log('stop:', stop)
+        const stop = new Date().getTime() - start;
+        console.log('stop:', stop);
         this.finish();
-        return
+        return;
       }
 
       this.findNeighboursOfCurrent().forEach(neighbor => {
-        if (this.isObstacleOrIsClosed(neighbor)) { return }
+        if (this.isObstacleOrIsClosed(neighbor)) { return; }
 
         neighbor.state = ChunkState.OPEN;
         this.addChunkToRedraw(neighbor);
@@ -38,13 +38,13 @@ export class Board extends BoardAbstract {
 
         if (this.openChunks_.includes(neighbor)) { return; }
 
-        this.openChunks_.push(neighbor)
+        this.openChunks_.push(neighbor);
       });
     }
   }
 
   protected newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor: Chunk): boolean {
-    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.openChunks_.includes(neighbor)
+    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.openChunks_.includes(neighbor);
   }
 
   private findLowestCostInOpen(): Chunk {
@@ -56,11 +56,9 @@ export class Board extends BoardAbstract {
   }
 
   private removeCurrentFromOpen(): void {
-    const index = this.openChunks_.indexOf(this.currentChunk_)
+    const index = this.openChunks_.indexOf(this.currentChunk_);
     if (index !== -1) {
       this.openChunks_.splice(index, 1);
     }
   }
-
-
 }

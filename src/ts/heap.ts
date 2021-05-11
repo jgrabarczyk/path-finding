@@ -30,12 +30,12 @@ export class Heap<T> {
 
   add(item: T): void {
     this.items_.push(item);
-    this.sortUp()
+    this.sortUp();
   }
 
   // bad
   public removeRoot(): void {
-    let newRoot = this.items_[this.items_.length - 1];
+    const newRoot = this.items_[this.items_.length - 1];
     this.items_[0] = newRoot;
     this.items_.pop();
 
@@ -51,15 +51,15 @@ export class Heap<T> {
           smallerChild = leftChild;
         }
       } else if (rightChild) {
-        smallerChild = rightChild
+        smallerChild = rightChild;
       } else {
-        return
+        return;
       }
 
       if (this.compare(smallerChild, newRoot)) {
-        this.swap(smallerChild, newRoot)
+        this.swap(smallerChild, newRoot);
       } else {
-        return
+        return;
       }
     }
   }
@@ -68,12 +68,12 @@ export class Heap<T> {
 
 
   private getLeftChild(child: number | T): T {
-    let i = Number.isInteger(child) ? child as number : this.getIndex(child as T)
+    const i = Number.isInteger(child) ? child as number : this.getIndex(child as T);
     return this.items_[(2 * i) + 1];
   }
 
   private getRightChild(child: number | T): T {
-    let i = Number.isInteger(child) ? child as number : this.getIndex(child as T)
+    const i = Number.isInteger(child) ? child as number : this.getIndex(child as T);
     return this.items_[(2 * i) + 2];
   }
 
@@ -84,13 +84,13 @@ export class Heap<T> {
   private sortUp(): void {
     let indexToFind = this.items_.length - 1;
     while (true) {
-      const item = this.items_[indexToFind]
+      const item = this.items_[indexToFind];
       const parent = this.items_[Math.floor((indexToFind - 1) / 2)];
 
       if (!parent) { return; }
 
       if (this.compare(item, parent)) {
-        this.swap(item, parent)
+        this.swap(item, parent);
       } else {
         indexToFind = this.getIndex(parent);
       }
@@ -100,7 +100,7 @@ export class Heap<T> {
   private swap(a: T, b: T): void {
     const indexA = this.getIndex(a);
     const indexB = this.getIndex(b);
-    [this.items_[indexA], this.items_[indexB]] = [this.items_[indexB], this.items_[indexA]]
+    [this.items_[indexA], this.items_[indexB]] = [this.items_[indexB], this.items_[indexA]];
   }
 
 }

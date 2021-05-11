@@ -1,11 +1,8 @@
-import { BoardAbstract, BoardI } from "./board-abstract";
-import { Chunk, ChunkState } from "./chunk";
-import { Heap, Sort } from "./heap";
+import { BoardAbstract, BoardI } from './board-abstract';
+import { Chunk, ChunkState } from './chunk';
+import { Heap, Sort } from './heap';
 
 export class BoardHeap extends BoardAbstract {
-  protected sortByCost = (a: Chunk, b: Chunk) =>
-    (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost);
-
   private heap_ = new Heap<Chunk>(this.sortByCost as Sort<Chunk>);
 
   constructor(canvas: HTMLCanvasElement, board: BoardI) {
@@ -13,7 +10,7 @@ export class BoardHeap extends BoardAbstract {
   }
 
   public async findPath(): Promise<void> {
-    let start = new Date().getTime();
+    const start = new Date().getTime();
     this.heap_.add(this.start);
 
     while (this.heap_.size()) {
@@ -25,14 +22,14 @@ export class BoardHeap extends BoardAbstract {
       this.addCurrentToClosedChunks();
 
       if (this.isGoalChunk(this.currentChunk_)) {
-        let stop = new Date().getTime() - start;
-        console.log('stop heap:', stop)
+        const stop = new Date().getTime() - start;
+        console.log('stop heap:', stop);
         this.finish();
-        return
+        return;
       }
 
       this.findNeighboursOfCurrent().forEach(neighbor => {
-        if (this.isObstacleOrIsClosed(neighbor)) { return }
+        if (this.isObstacleOrIsClosed(neighbor)) { return; }
 
         neighbor.state = ChunkState.OPEN;
         this.addChunkToRedraw(neighbor);
@@ -48,8 +45,12 @@ export class BoardHeap extends BoardAbstract {
     }
   }
 
+  protected sortByCost(a: Chunk, b: Chunk): boolean {
+    return (a.finalCost < b.finalCost) || (a.finalCost === b.finalCost && a.goalCost < b.goalCost);
+  }
+
   protected newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor: Chunk): boolean {
-    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.heap_.contains(neighbor)
+    return neighbor.homeCost <= this.getNewHomeCost(neighbor) && this.heap_.contains(neighbor);
   }
 
 

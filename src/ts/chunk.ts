@@ -24,16 +24,15 @@ export class Chunk {
     public x: number,
     public y: number,
     private ctx: CanvasRenderingContext2D,
-    private blockSize:number,
+    private blockSize: number,
     state?: ChunkState,
   ) {
-    // super();
     this.state = state || ChunkState.EMPTY;
   }
 
   draw(): void {
-    let xPos = this.x * this.blockSize;
-    let yPos = this.y * this.blockSize;
+    const xPos = this.x * this.blockSize;
+    const yPos = this.y * this.blockSize;
 
     this.drawBorder(xPos, yPos, this.blockSize, this.blockSize);
     this.ctx.fillStyle = this.state;
@@ -41,20 +40,17 @@ export class Chunk {
 
     if (!this.finalCost) { return; }
 
-    this.ctx.strokeStyle = "#000";
-    this.ctx.fillStyle = "#abc";
-    this.ctx.font = "10px Georgia";
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
-    this.ctx.fillText(
-      this.finalCost.toString(),
-      (xPos + (this.blockSize / 2)),
-      (yPos + (this.blockSize / 2))
-    );
+    this.drawTxt(xPos, yPos);
+  }
+
+  getDistanceTo(chunk: Chunk): number {
+    const distX = Math.abs(this.x - chunk.x);
+    const distY = Math.abs(this.y - chunk.y);
+    return distX > distY ? this.getMovementCost(distX, distY) : this.getMovementCost(distY, distX);
   }
 
   private drawBorder(xPos: number, yPos: number, width: number, height: number, thickness = 1): void {
-    this.ctx.fillStyle = "#000";
+    this.ctx.fillStyle = '#000';
     this.ctx.fillRect(
       xPos - thickness,
       yPos - thickness,
@@ -63,13 +59,20 @@ export class Chunk {
     );
   }
 
-  public getDistanceTo(chunk: Chunk): number {
-    const distX = Math.abs(this.x - chunk.x);
-    const distY = Math.abs(this.y - chunk.y);
-    return distX > distY ? this.getMovementCost(distX, distY) : this.getMovementCost(distY, distX);
+  private drawTxt(xPos: number, yPos: number): void {
+    this.ctx.strokeStyle = '#000';
+    this.ctx.fillStyle = '#abc';
+    this.ctx.font = '10px Georgia';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText(
+      this.finalCost.toString(),
+      (xPos + (this.blockSize / 2)),
+      (yPos + (this.blockSize / 2))
+    );
   }
 
   private getMovementCost(higherNo: number, lowerNo: number): number {
-    return this.DIAGONAL_COST * lowerNo + this.BASIC_COST * (higherNo - lowerNo)
+    return this.DIAGONAL_COST * lowerNo + this.BASIC_COST * (higherNo - lowerNo);
   }
 }
