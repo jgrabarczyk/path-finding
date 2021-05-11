@@ -2,7 +2,7 @@ import { BoardAbstract, BoardI } from './board-abstract';
 import { Chunk, ChunkState } from './chunk';
 import { Heap, Sort } from './heap';
 
-export class BoardHeap extends BoardAbstract {
+export class AStarWithHeap extends BoardAbstract {
   private heap_ = new Heap<Chunk>(this.sortByCost as Sort<Chunk>);
 
   constructor(canvas: HTMLCanvasElement, board: BoardI) {
@@ -31,7 +31,10 @@ export class BoardHeap extends BoardAbstract {
       this.findNeighboursOfCurrent().forEach(neighbor => {
         if (this.isObstacleOrIsClosed(neighbor)) { return; }
 
-        neighbor.state = ChunkState.OPEN;
+        if (!this.isStartOrFinish(neighbor)) {
+          neighbor.state = ChunkState.OPEN;
+        }
+
         this.addChunkToRedraw(neighbor);
 
         if (this.newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor)) { return; }

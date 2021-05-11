@@ -9,14 +9,13 @@ export interface BoardI {
   delay?: number;
   animate?: boolean;
   obstacleChance?: number;
-
 }
 
 export abstract class BoardAbstract extends Canvas {
   protected currentChunk_!: Chunk;
   private obstacleChance_: number;
   private startChunk_!: Chunk;
-  private goalChunk_!: Chunk;
+  protected goalChunk_!: Chunk;
   private delay_: number;
   private grid_: Grid;
   private chunksToRedraw_: Chunk[] = [];
@@ -24,7 +23,6 @@ export abstract class BoardAbstract extends Canvas {
 
   constructor(canvas: HTMLCanvasElement, board: BoardI) {
     super(canvas, board.blockSize);
-
     this.grid_ = new Grid(board.size, this.ctx, this.blockSize_);
     this.delay_ = board.delay || 0;
     this.obstacleChance_ = board.obstacleChance || 0.25;
@@ -94,11 +92,15 @@ export abstract class BoardAbstract extends Canvas {
   }
 
   protected addCurrentToClosedChunks(): void {
-    if (!this.isStartChunk(this.currentChunk_) && !this.isGoalChunk(this.currentChunk_)) {
+    if (!this.isStartOrFinish(this.currentChunk_)) {
       this.currentChunk_.state = ChunkState.CLOSED;
       this.addChunkToRedraw(this.currentChunk_);
     }
     this.closedChunks_.push(this.currentChunk_);
+  }
+
+  protected isStartOrFinish(chunk: Chunk): boolean {
+    return this.isStartChunk(chunk) || this.isGoalChunk(chunk);
   }
 
   protected isGoalChunk(chunk: Chunk): boolean {
@@ -113,6 +115,9 @@ export abstract class BoardAbstract extends Canvas {
     neighbor.homeCost = this.getNewHomeCost(neighbor);
     neighbor.goalCost = neighbor.getDistanceTo(this.goal);
     neighbor.parent = this.currentChunk_;
+    if (this.isGoalChunk(neighbor)) {
+      this.goalChunk_.parent = this.currentChunk_;
+    }
   }
 
   protected async reDraw(): Promise<void> {
@@ -174,7 +179,7 @@ export abstract class BoardAbstract extends Canvas {
   private getRetracedFinalPath(): Chunk[] {
     const finalPath: Chunk[] = [];
     let current: Chunk = this.goal;
-    while (current !== this.startChunk_) {
+    while (current !== this.start) {
 
       finalPath.push(current);
       if (!current.parent) {

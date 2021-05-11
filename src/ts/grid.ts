@@ -11,8 +11,8 @@ export class Grid {
     this.columns_ = columns;
     this.rows_ = rows;
     this.ctx = ctx;
-    this.body_ = this.emptyBoard();
     this.blockSize_ = blocksize;
+    this.body_ = this.emptyBoard();
   }
 
   private emptyBoard(): Chunk[][] {
@@ -20,7 +20,7 @@ export class Grid {
   }
 
   private newLine(y: number): Chunk[] {
-    return Array.from(Array(this.columns_), (_, index) => new Chunk(index, y, this.ctx, this.blockSize_));
+    return Array.from(Array(this.columns_), (_, x) => new Chunk(x, y, this.ctx, this.blockSize_));
   }
 
   get body(): Chunk[][] {

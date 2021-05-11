@@ -18,7 +18,7 @@ export class Canvas {
   }
 
   pickRandom(max: number): number {
-    return Math.round(Math.random() * max);
+    return Math.floor(Math.random() * max);
   }
 
   pickPoint(BOARD_SIZE: [number, number]): Point {

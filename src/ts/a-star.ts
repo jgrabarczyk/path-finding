@@ -1,7 +1,7 @@
 import { BoardAbstract, BoardI } from './board-abstract';
 import { Chunk, ChunkState } from './chunk';
 
-export class Board extends BoardAbstract {
+export class AStar extends BoardAbstract {
   private openChunks_: Chunk[] = [];
 
   constructor(canvas: HTMLCanvasElement, board: BoardI) {
@@ -17,6 +17,7 @@ export class Board extends BoardAbstract {
 
       this.currentChunk_ = this.findLowestCostInOpen();
       this.removeCurrentFromOpen();
+
       this.addCurrentToClosedChunks();
 
       if (this.isGoalChunk(this.currentChunk_)) {
@@ -29,7 +30,10 @@ export class Board extends BoardAbstract {
       this.findNeighboursOfCurrent().forEach(neighbor => {
         if (this.isObstacleOrIsClosed(neighbor)) { return; }
 
-        neighbor.state = ChunkState.OPEN;
+        if (!this.isStartOrFinish(neighbor)) {
+          neighbor.state = ChunkState.OPEN;
+        }
+
         this.addChunkToRedraw(neighbor);
 
         if (this.newCostIsNotBetterAndIsAlreadyInOpenChunks(neighbor)) { return; }

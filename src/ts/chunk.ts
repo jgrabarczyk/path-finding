@@ -60,6 +60,7 @@ export class Chunk {
   }
 
   private drawTxt(xPos: number, yPos: number): void {
+    if (this.blockSize < 20) { return; }
     this.ctx.strokeStyle = '#000';
     this.ctx.fillStyle = '#abc';
     this.ctx.font = '10px Georgia';
